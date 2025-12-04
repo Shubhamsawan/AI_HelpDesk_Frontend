@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Search, MoreVertical, Send, Plus } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -71,55 +71,29 @@ const CONVERSTIONS = [
             "Ok can you provide me the detail of your current database setup?",
         at: "10:03 AM",
     },
-    {
-        id: 3,
-        author: "bot",
-        message:
-            "Ok can you provide me the detail of your current database setup?",
-        at: "10:03 AM",
-    },
-    {
-        id: 3,
-        author: "bot",
-        message:
-            "Ok can you provide me the detail of your current database setup?",
-        at: "10:03 AM",
-    },
-    {
-        id: 3,
-        author: "bot",
-        message:
-            "Ok can you provide me the detail of your current database setup?",
-        at: "10:03 AM",
-    },
-    {
-        id: 3,
-        author: "bot",
-        message:
-            "Ok can you provide me the detail of your current database setup?",
-        at: "10:03 AM",
-    },
-    {
-        id: 3,
-        author: "bot",
-        message:
-            "Ok can you provide me the detail of your current database setup?",
-        at: "10:03 AM",
-    },
-    {
-        id: 3,
-        author: "bot",
-        message:
-            "Ok can you provide me the detail of your current database setup?",
-        at: "10:03 AM",
-    },
-];
 
+];
+// video 1:25:40
 function Chat() {
+
+    const [messages, setMessages] = useState(CONVERSTIONS);
+    const [draft, setDraft] = useState("");
+    const endRef = useRef(null);
+    const[sending,setSending]= useState(false);
+
+    useEffect(() => {
+        endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    function sendMessage() {
+        const textMessage = draft.trim();
+        if (!textMessage) return;
+    }
+
     return (
         // <div className=" fixed top-0 left-0 right-0 mx-auto min-h-screen max-w-7xl grid grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] border-x">
-        <div className="fixed top-0 left-0 right-0 mx-auto min-h-screen max-w-7xl 
-grid grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] border-x min-h-0">
+        <div className="fixed top-0 left-0 right-0 mx-auto h-screen max-w-7xl grid grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] border-x">
+
 
             {/* Sidebar */}
             <aside className="flex flex-col border-r">
@@ -170,11 +144,11 @@ grid grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] border-x min-h-0">
                 </div>
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 overflow-y-auto">
+                <ScrollArea className="flex-1 min-h-0">
                     <div className="mx-auto max-w-3xl px-6 py-6 space-y-6">
-                        {CONVERSTIONS.map((chat, index) => (
+                        {messages.map((chat, index) => (
                             <MessageBubble key={index} author={chat.author} at={chat.at}>
-                                {chat.text || chat.message}
+                                {chat.message }
                             </MessageBubble>
                         ))}
                     </div>
@@ -184,8 +158,8 @@ grid grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] border-x min-h-0">
                 <div className="border-t p-3">
                     <div className="mx-auto flex max-w-3xl items-center gap-3">
 
-                        <input placeholder="Write a message..." className={'flex-1 rounded-3x;'} />
-                        <Button className={'rounded-3xl px-5'}>
+                        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message..." className={'flex-1 rounded-3xl;'} />
+                        <Button enabled={!sending} onClick={sendMessage} className={'rounded-3xl px-5'}>
                             <Send className="mr-1 h-4 w-4" /><span>Send</span>
                         </Button>
                     </div>
