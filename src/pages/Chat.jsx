@@ -5,6 +5,8 @@ import { ScrollArea } from "../components/ui/scroll-area";
 import MessageBubble from "../components/ui/MessageBubble";
 import { Separator } from "../components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
+import { sendMessagesToServer } from "../service/chat.service";
+import { v4 as uuidv4 } from "uuid";
 
 const CHATS = [
     {
@@ -54,23 +56,11 @@ const CHATS = [
 const CONVERSTIONS = [
     {
         id: 1,
-        author: "bot",
+        author: "Lizza",
         message: "Hello! How can I assist you with Spring Boot today?",
-        at: "10:00 AM",
+        at: new Date().toLocaleDateString(),
     },
-    {
-        id: 2,
-        author: "user",
-        message: "Can you help with the database migration?",
-        at: "10:01 AM",
-    },
-    {
-        id: 3,
-        author: "bot",
-        message:
-            "Ok can you provide me the detail of your current database setup?",
-        at: "10:03 AM",
-    },
+
 
 ];
 // video 1:25:40
@@ -79,15 +69,40 @@ function Chat() {
     const [messages, setMessages] = useState(CONVERSTIONS);
     const [draft, setDraft] = useState("");
     const endRef = useRef(null);
-    const[sending,setSending]= useState(false);
+    const [sending, setSending] = useState(false);
+    const [conversationId, setConversationId] = useState("");
+    useEffect(() => {
+        const id = uuidv4();
+        setConversationId(id);
+    }, []);
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    function sendMessage() {
+    async function sendMessages() {
         const textMessage = draft.trim();
         if (!textMessage) return;
+
+        console.log("Sending message:", draft);
+        // console.log("conversationId:", conversationId);
+        //video 1:43:20
+
+
+        const responseFromAI = await sendMessagesToServer(draft, conversationId);
+
+        console.log("responseFromAI:", responseFromAI);
+
+        setMessages([
+            ...messages,
+            {
+                id: uuidv4(),
+                author: "bot",
+                message: responseFromAI,
+                at: new Date().toLocaleDateString(),
+            },
+        ]);
+
     }
 
     return (
@@ -148,10 +163,11 @@ function Chat() {
                     <div className="mx-auto max-w-3xl px-6 py-6 space-y-6">
                         {messages.map((chat, index) => (
                             <MessageBubble key={index} author={chat.author} at={chat.at}>
-                                {chat.message }
+                                {chat.message}
                             </MessageBubble>
                         ))}
                     </div>
+                    <div ref={endRef}> </div>
                 </ScrollArea>
 
                 {/* compose */}
@@ -159,7 +175,7 @@ function Chat() {
                     <div className="mx-auto flex max-w-3xl items-center gap-3">
 
                         <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message..." className={'flex-1 rounded-3xl;'} />
-                        <Button enabled={!sending} onClick={sendMessage} className={'rounded-3xl px-5'}>
+                        <Button enabled={!sending} onClick={sendMessages} className={'rounded-3xl px-5'}>
                             <Send className="mr-1 h-4 w-4" /><span>Send</span>
                         </Button>
                     </div>
