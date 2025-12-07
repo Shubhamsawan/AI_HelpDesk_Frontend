@@ -7,6 +7,9 @@ import { Separator } from "../components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
 import { sendMessagesToServer } from "../service/chat.service";
 import { v4 as uuidv4 } from "uuid";
+import { Spinner } from "../components/ui/spinner";
+import { LogOut } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const CHATS = [
     {
@@ -53,27 +56,21 @@ const CHATS = [
     },
 ];
 
-const CONVERSTIONS = [
-    {
-        id: 1,
-        author: "Lizza",
-        message: "Hello! How can I assist you with Spring Boot today?",
-        at: new Date().toLocaleDateString(),
-    },
-
-
-];
+const CONVERSTIONS = [];
 // video 1:25:40
 function Chat() {
-
+    const [activeChat, setActiveChat] = useState(CHATS[0]);
     const [messages, setMessages] = useState(CONVERSTIONS);
     const [draft, setDraft] = useState("");
     const endRef = useRef(null);
     const [sending, setSending] = useState(false);
     const [conversationId, setConversationId] = useState("");
+    const inputRef = useRef(null);
+    const navigate = useNavigate();
     useEffect(() => {
         const id = uuidv4();
         setConversationId(id);
+        inputRef.current.focus();
     }, []);
 
     useEffect(() => {
@@ -83,18 +80,26 @@ function Chat() {
     async function sendMessages() {
         const textMessage = draft.trim();
         if (!textMessage) return;
-
+        setSending(true);
         console.log("Sending message:", draft);
         // console.log("conversationId:", conversationId);
         //video 1:43:20
-
+        setMessages((pre) => [
+            ...pre,
+            {
+                id: uuidv4(),
+                author: "user",
+                message: draft,
+                at: new Date().toLocaleDateString(),
+            },
+        ]);
 
         const responseFromAI = await sendMessagesToServer(draft, conversationId);
 
         console.log("responseFromAI:", responseFromAI);
 
-        setMessages([
-            ...messages,
+        setMessages((pre) => [
+            ...pre,
             {
                 id: uuidv4(),
                 author: "bot",
@@ -103,11 +108,16 @@ function Chat() {
             },
         ]);
 
+        setSending(false);
+        setDraft("");
+        inputRef.current.focus();
     }
 
     return (
         // <div className=" fixed top-0 left-0 right-0 mx-auto min-h-screen max-w-7xl grid grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] border-x">
-        <div className="fixed top-0 left-0 right-0 mx-auto h-screen max-w-7xl grid grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] border-x">
+<div className="mx-auto min-h-screen max-w-7xl 
+    grid grid-cols-1 md:grid-cols-[300px_minmax(0,_1fr)] border-x">
+
 
 
             {/* Sidebar */}
@@ -127,6 +137,44 @@ function Chat() {
                     </div>
                 </div>
                 <Separator />
+                <ScrollArea className="flex-1">
+                    <ul className="p-2 space-y-1">
+                        {CHATS.map((c) => (
+                            <li key={c.id}>
+                                <button
+                                    onClick={() => setActiveChat(c)}
+                                    className={`w-full rounded-xl px-3 py-2 text-left hover:bg-accent transition ${activeChat.id === c.id ? "bg-accent" : ""
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-9 w-9">
+                                            <AvatarImage src="" alt={c.name} />
+                                            <AvatarFallback className="text-xs">
+                                                {c.initials}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="truncate text-sm font-medium">
+                                                    {c.name}
+                                                </span>
+                                                {c.unread ? (
+                                                    <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1 text-[10px] font-semibold text-primary">
+                                                        {c.unread}
+                                                    </span>
+                                                ) : null}
+                                            </div>
+                                            <p className="truncate text-xs text-muted-foreground">
+                                                {c.lastMessage}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+
+                </ScrollArea>
             </aside>
 
             {/* Chat Area */}
@@ -149,11 +197,16 @@ function Chat() {
                     </div>
 
                     <div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Search className="h-4 w-3" />
+                        <Button onClick={() => {
+                            navigate("/");
+                        }}
+                            variant={"ghost"}
+                            size={"icon"}
+                            className={"h-8 w-8"}>
+                            <LogOut className={"h-4 w-3"} />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-3" />
+                        <Button variant={"ghost"} size={"icon"} className={"h-8 w-8"}>
+                            <MoreVertical className={"h-4 w-3"} />
                         </Button>
                     </div>
                 </div>
@@ -174,9 +227,16 @@ function Chat() {
                 <div className="border-t p-3">
                     <div className="mx-auto flex max-w-3xl items-center gap-3">
 
-                        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message..." className={'flex-1 rounded-3xl;'} />
-                        <Button enabled={!sending} onClick={sendMessages} className={'rounded-3xl px-5'}>
-                            <Send className="mr-1 h-4 w-4" /><span>Send</span>
+                        <input ref={inputRef}
+                            value={draft}
+                            onChange={(e) => setDraft(e.target.value)}
+                            placeholder="Write a message..."
+                            className={'flex-1 rounded-3xl;'} />
+
+                        <Button disabled={sending} onClick={sendMessages} className={'rounded-3xl px-5'}>
+                            {/* <Send className="mr-1 h-4 w-4" /> */}
+                            {sending ? <Spinner /> : <Send className="h-4 w-4" />}
+                            {sending ? "Sending.." : "Send"}
                         </Button>
                     </div>
 
